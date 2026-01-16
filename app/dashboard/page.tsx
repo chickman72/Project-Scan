@@ -7,7 +7,6 @@ import AuthButtons from "@/components/AuthButtons";
 import Navbar from "@/components/Navbar";
 
 export default async function DashboardPage() {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "";
   const session = await getServerSession(authOptions);
   const userId = session?.user?.id;
   const userEmail = session?.user?.email ?? null;
@@ -39,7 +38,6 @@ export default async function DashboardPage() {
       <main className="mx-auto max-w-6xl px-6 py-10">
         <DashboardClient
           userId={userId}
-          baseUrl={baseUrl}
           initialItems={initialItems}
         />
       </main>

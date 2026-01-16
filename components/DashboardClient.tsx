@@ -18,13 +18,11 @@ type QRItem = {
 
 type DashboardClientProps = {
   userId: string;
-  baseUrl: string;
   initialItems: QRItem[];
 };
 
 export default function DashboardClient({
   userId,
-  baseUrl,
   initialItems,
 }: DashboardClientProps) {
   const [items, setItems] = useState<QRItem[]>(initialItems);
@@ -90,7 +88,6 @@ export default function DashboardClient({
             <QRCard
               key={item.id}
               item={item}
-              baseUrl={baseUrl}
               onDeleted={handleDeleted}
               onUpdated={handleUpdated}
             />

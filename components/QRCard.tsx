@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 import { deleteQR, updateQR } from "@/app/actions/qrActions";
 
@@ -16,24 +16,23 @@ type QRItem = {
 
 type QRCardProps = {
   item: QRItem;
-  baseUrl: string;
   onDeleted?: (id: string) => void;
   onUpdated?: (id: string, name: string, url: string) => void;
 };
 
-export default function QRCard({
-  item,
-  baseUrl,
-  onDeleted,
-  onUpdated,
-}: QRCardProps) {
+export default function QRCard({ item, onDeleted, onUpdated }: QRCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(item.name ?? "");
   const [url, setUrl] = useState(item.originalUrl);
   const [isPending, startTransition] = useTransition();
+  const [origin, setOrigin] = useState("");
 
-  const trackingUrl = baseUrl
-    ? `${baseUrl.replace(/\/$/, "")}/t/${item.shortCode}`
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
+  const trackingUrl = origin
+    ? `${origin}/t/${item.shortCode}`
     : `/t/${item.shortCode}`;
 
   const qrImageSrc = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
