@@ -1,7 +1,7 @@
 import type { NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 
-import { usersContainer } from "@/lib/cosmos";
+import { getUsersContainer } from "@/lib/cosmos";
 import { verifyPassword } from "@/lib/password";
 
 const demoEmail = process.env.DEMO_USER_EMAIL;
@@ -43,6 +43,7 @@ export const authOptions: NextAuthOptions = {
           }
         }
 
+        const usersContainer = getUsersContainer();
         if (!usersContainer) {
           return null;
         }

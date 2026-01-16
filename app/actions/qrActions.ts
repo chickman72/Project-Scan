@@ -1,6 +1,6 @@
 "use server";
 
-import { container } from "@/lib/cosmos";
+import { getContainer } from "@/lib/cosmos";
 
 const SHORT_CODE_LENGTH = 6;
 const SHORT_CODE_ALPHABET =
@@ -32,7 +32,7 @@ function generateShortCode(): string {
 }
 
 async function isShortCodeUnique(shortCode: string): Promise<boolean> {
-  const { resources } = await container.items
+  const { resources } = await getContainer().items
     .query<Pick<QRItem, "id">>({
       query: "SELECT VALUE c.id FROM c WHERE c.shortCode = @shortCode",
       parameters: [{ name: "@shortCode", value: shortCode }],
@@ -71,7 +71,7 @@ export async function createQR(data: CreateQRInput): Promise<QRItem> {
     createdAt: now,
   };
 
-  await container.items.create(item);
+  await getContainer().items.create(item);
 
   return item;
 }
@@ -81,7 +81,7 @@ export async function deleteQR(id: string, userId: string): Promise<void> {
     throw new Error("Missing required fields.");
   }
 
-  await container.item(id, userId).delete();
+  await getContainer().item(id, userId).delete();
 }
 
 export async function updateQR(
@@ -101,7 +101,7 @@ export async function updateQR(
     throw new Error("Destination URL is required.");
   }
 
-  await container.item(id, userId).patch([
+  await getContainer().item(id, userId).patch([
     { op: "replace", path: "/name", value: cleanedName },
     { op: "replace", path: "/originalUrl", value: cleanedUrl },
   ]);
@@ -112,7 +112,7 @@ export async function getUserQRs(userId: string): Promise<QRItem[]> {
     throw new Error("Missing userId.");
   }
 
-  const { resources } = await container.items
+  const { resources } = await getContainer().items
     .query<QRItem>({
       query: "SELECT * FROM c WHERE c.userId = @userId ORDER BY c.createdAt DESC",
       parameters: [{ name: "@userId", value: userId }],

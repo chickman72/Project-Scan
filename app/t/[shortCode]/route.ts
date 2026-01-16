@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { container } from "@/lib/cosmos";
+import { getContainer } from "@/lib/cosmos";
 
 type QRItem = {
   id: string;
@@ -15,7 +15,7 @@ export async function GET(
 ) {
   const { shortCode } = await params;
 
-  const { resources } = await container.items
+  const { resources } = await getContainer().items
     .query<QRItem>({
       query: "SELECT * FROM c WHERE c.shortCode = @shortCode",
       parameters: [{ name: "@shortCode", value: shortCode }],
@@ -28,7 +28,7 @@ export async function GET(
     return new NextResponse("Not found", { status: 404 });
   }
 
-  await container
+  await getContainer()
     .item(item.id, item.userId)
     .patch([{ op: "incr", path: "/clickCount", value: 1 }]);
 

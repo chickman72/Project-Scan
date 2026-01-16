@@ -1,6 +1,6 @@
 "use server";
 
-import { usersContainer } from "@/lib/cosmos";
+import { getUsersContainer } from "@/lib/cosmos";
 import { hashPassword } from "@/lib/password";
 
 type RegisterInput = {
@@ -17,6 +17,7 @@ type UserItem = {
 };
 
 export async function registerUser(data: RegisterInput) {
+  const usersContainer = getUsersContainer();
   if (!usersContainer) {
     throw new Error("Users container is not configured.");
   }
