@@ -71,7 +71,7 @@ export async function createQR(data: CreateQRInput): Promise<QRItem> {
     createdAt: now,
   };
 
-  await container.items.create(item, { partitionKey: data.userId });
+  await container.items.create(item);
 
   return item;
 }

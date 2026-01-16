@@ -57,7 +57,7 @@ export async function registerUser(data: RegisterInput) {
     createdAt: now,
   };
 
-  await usersContainer.items.create(item, { partitionKey: email });
+  await usersContainer.items.create(item);
 
   return { id: item.id, email: item.email };
 }
