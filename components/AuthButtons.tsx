@@ -15,7 +15,12 @@ export default function AuthButtons({ userEmail }: AuthButtonsProps) {
         </span>
       ) : null}
       <button
-        onClick={() => signOut({ callbackUrl: "/" })}
+        onClick={async () => {
+          const result = await signOut({ callbackUrl: "/", redirect: false });
+          if (result?.url) {
+            window.location.href = "/";
+          }
+        }}
         className="rounded-full border border-black/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-black/70 transition hover:-translate-y-0.5"
       >
         Sign out

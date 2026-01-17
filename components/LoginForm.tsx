@@ -26,8 +26,8 @@ export default function LoginForm() {
         return;
       }
 
-      if (result?.url) {
-        window.location.href = result.url;
+      if (result?.ok) {
+        window.location.href = "/dashboard";
       }
     });
   };

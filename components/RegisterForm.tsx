@@ -24,11 +24,15 @@ export default function RegisterForm() {
     startTransition(async () => {
       try {
         await registerUser({ email, password });
-        await signIn("credentials", {
+        const result = await signIn("credentials", {
           email,
           password,
           callbackUrl: "/dashboard",
+          redirect: false,
         });
+        if (result?.ok) {
+          window.location.href = "/dashboard";
+        }
       } catch (submissionError) {
         setError(
           submissionError instanceof Error
