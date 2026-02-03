@@ -26,6 +26,8 @@ export default function QRCard({ item, onDeleted, onUpdated }: QRCardProps) {
   const [url, setUrl] = useState(item.originalUrl);
   const [isPending, startTransition] = useTransition();
   const [origin, setOrigin] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState<string | null>(null);
 
   useEffect(() => {
     setOrigin(window.location.origin);
@@ -52,6 +54,31 @@ export default function QRCard({ item, onDeleted, onUpdated }: QRCardProps) {
       onUpdated?.(item.id, name, url);
       setIsEditing(false);
     });
+  };
+
+  const copyToClipboard = async (text: string) => {
+    if (!text) return;
+    setCopyError(null);
+    setCopied(false);
+
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.style.position = "fixed";
+        textarea.style.left = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch (err) {
+      setCopyError("Unable to copy link.");
+    }
   };
 
   return (
@@ -95,6 +122,33 @@ export default function QRCard({ item, onDeleted, onUpdated }: QRCardProps) {
             {name || "Untitled QR"}
           </p>
         )}
+        <div className="rounded-2xl border border-black/10 bg-black/5 px-3 py-2">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-black/50">
+            Short Link
+          </p>
+          <div className="mt-2 flex items-center gap-2">
+            <a
+              href={trackingUrl}
+              className="flex-1 truncate text-xs font-semibold text-black"
+            >
+              {trackingUrl}
+            </a>
+            <button
+              onClick={() => copyToClipboard(trackingUrl)}
+              className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-black transition hover:-translate-y-0.5"
+            >
+              Copy Link
+            </button>
+          </div>
+          {copied ? (
+            <p className="mt-2 text-[10px] font-semibold text-black">
+              Copied!
+            </p>
+          ) : null}
+          {copyError ? (
+            <p className="mt-2 text-[10px] text-red-600">{copyError}</p>
+          ) : null}
+        </div>
         <p className="break-all text-sm text-black/60">{item.originalUrl}</p>
       </div>
       <div className="mt-auto flex items-center gap-2">

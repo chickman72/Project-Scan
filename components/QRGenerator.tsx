@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 import { createQR } from "@/app/actions/qrActions";
 
@@ -22,8 +22,53 @@ type QRGeneratorProps = {
 export default function QRGenerator({ userId, onCreated }: QRGeneratorProps) {
   const [url, setUrl] = useState("");
   const [name, setName] = useState("");
+  const [generatedItem, setGeneratedItem] = useState<QRItem | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [origin, setOrigin] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
+  const shortLink = generatedItem
+    ? origin
+      ? `${origin}/t/${generatedItem.shortCode}`
+      : `/t/${generatedItem.shortCode}`
+    : "";
+
+  const qrImageSrc = shortLink
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(
+        shortLink
+      )}`
+    : "";
+
+  const copyToClipboard = async (text: string) => {
+    if (!text) return;
+    setCopyError(null);
+    setCopied(false);
+
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.style.position = "fixed";
+        textarea.style.left = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch (err) {
+      setCopyError("Unable to copy link.");
+    }
+  };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -43,6 +88,7 @@ export default function QRGenerator({ userId, onCreated }: QRGeneratorProps) {
         });
         setUrl("");
         setName("");
+        setGeneratedItem(item);
         onCreated?.(item);
       } catch (submissionError) {
         setError(
@@ -91,6 +137,67 @@ export default function QRGenerator({ userId, onCreated }: QRGeneratorProps) {
         </button>
       </div>
       {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
+
+      {generatedItem ? (
+        <div className="mt-6 rounded-3xl border border-black/10 bg-white p-4 shadow-[0_15px_40px_-30px_rgba(0,0,0,0.45)] md:p-6">
+          <div className="grid gap-6 md:grid-cols-[1fr_1.1fr] md:items-center">
+            <div className="flex items-center justify-center rounded-2xl bg-black/5 p-4">
+              <img
+                src={qrImageSrc}
+                alt={`QR code for ${shortLink}`}
+                className="h-56 w-56 rounded-2xl bg-white p-3"
+              />
+            </div>
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-black/50">
+                  Short Link
+                </p>
+                <div className="mt-2 flex items-center gap-2 rounded-2xl border border-black/10 bg-black/5 px-3 py-3">
+                  <a
+                    href={shortLink}
+                    className="flex-1 truncate text-sm font-semibold text-black"
+                  >
+                    {shortLink}
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(shortLink)}
+                    className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-black transition hover:-translate-y-0.5"
+                  >
+                    <svg
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      className="h-4 w-4"
+                      aria-hidden="true"
+                    >
+                      <path d="M6 3a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-1a1 1 0 1 1 0-2h1V3H8v1a1 1 0 0 1-2 0V3z" />
+                      <path d="M4 7a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7zm2 0v10h6V7H6z" />
+                    </svg>
+                    Copy Link
+                  </button>
+                </div>
+                {copied ? (
+                  <p className="mt-2 text-xs font-semibold text-black">
+                    Copied!
+                  </p>
+                ) : null}
+                {copyError ? (
+                  <p className="mt-2 text-xs text-red-600">{copyError}</p>
+                ) : null}
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-black/50">
+                  Destination URL
+                </p>
+                <p className="mt-2 break-all text-sm text-black/70">
+                  {generatedItem.originalUrl}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </form>
   );
 }
