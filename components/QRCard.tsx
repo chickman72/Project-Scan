@@ -17,13 +17,16 @@ type QRItem = {
 type QRCardProps = {
   item: QRItem;
   onDeleted?: (id: string) => void;
-  onUpdated?: (id: string, name: string, url: string) => void;
+  onUpdated?: (id: string, name: string, url: string, createdAt: string) => void;
 };
 
 export default function QRCard({ item, onDeleted, onUpdated }: QRCardProps) {
-  const [isEditing, setIsEditing] = useState(false);
+  const [editingField, setEditingField] = useState<"general" | "time" | null>(
+    null
+  );
   const [name, setName] = useState(item.name ?? "");
   const [url, setUrl] = useState(item.originalUrl);
+  const [createdAt, setCreatedAt] = useState(item.createdAt);
   const [isPending, startTransition] = useTransition();
   const [origin, setOrigin] = useState("");
   const [copied, setCopied] = useState(false);
@@ -50,9 +53,9 @@ export default function QRCard({ item, onDeleted, onUpdated }: QRCardProps) {
 
   const handleSave = () => {
     startTransition(async () => {
-      await updateQR(item.id, item.userId, name, url);
-      onUpdated?.(item.id, name, url);
-      setIsEditing(false);
+      await updateQR(item.id, item.userId, name, url, createdAt);
+      onUpdated?.(item.id, name, url, createdAt);
+      setEditingField(null);
     });
   };
 
@@ -102,7 +105,7 @@ export default function QRCard({ item, onDeleted, onUpdated }: QRCardProps) {
         />
       </div>
       <div className="space-y-3">
-        {isEditing ? (
+        {editingField === "general" ? (
           <div className="space-y-3">
             <input
               className="w-full rounded-2xl border border-black/10 px-3 py-2 text-sm"
@@ -118,8 +121,35 @@ export default function QRCard({ item, onDeleted, onUpdated }: QRCardProps) {
             />
           </div>
         ) : (
-          <p className="text-base font-medium text-black">
-            {name || "Untitled QR"}
+          <div>
+            <p className="text-base font-medium text-black">
+              {name || "Untitled QR"}
+            </p>
+          </div>
+        )}
+        {editingField === "time" ? (
+          <div className="space-y-3">
+            <input
+              type="datetime-local"
+              className="w-full rounded-2xl border border-black/10 px-3 py-2 text-sm"
+              value={createdAt ? createdAt.slice(0, 16) : ""}
+              onChange={(event) =>
+                setCreatedAt(new Date(event.target.value).toISOString())
+              }
+              placeholder="Creation date"
+            />
+          </div>
+        ) : (
+          <p className="flex items-center gap-2 text-xs text-black/40">
+            <span>
+              Created at: {new Date(item.createdAt).toLocaleString()}
+            </span>
+            <button
+              onClick={() => setEditingField("time")}
+              className="text-xs font-semibold uppercase tracking-[0.2em] text-black/60"
+            >
+              (Edit)
+            </button>
           </p>
         )}
         <div className="rounded-2xl border border-black/10 bg-black/5 px-3 py-2">
@@ -152,7 +182,7 @@ export default function QRCard({ item, onDeleted, onUpdated }: QRCardProps) {
         <p className="break-all text-sm text-black/60">{item.originalUrl}</p>
       </div>
       <div className="mt-auto flex items-center gap-2">
-        {isEditing ? (
+        {editingField ? (
           <button
             onClick={handleSave}
             disabled={isPending}
@@ -162,7 +192,7 @@ export default function QRCard({ item, onDeleted, onUpdated }: QRCardProps) {
           </button>
         ) : (
           <button
-            onClick={() => setIsEditing(true)}
+            onClick={() => setEditingField("general")}
             className="rounded-full border border-black/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-black transition hover:-translate-y-0.5"
           >
             Edit
